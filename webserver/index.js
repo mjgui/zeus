@@ -7,6 +7,9 @@ var io = require('socket.io')(http);
 var ensureAuthenticated = require("./middlewares/auth.js");
 var connected = [];
 var dispatcher = require("./models/dispatcher.js");
+var user = require("./models/user.js");
+var seeders = [];
+var leechers = [];
 
 // Public directory
 app.use(express.static(__dirname + '/public'));
@@ -27,8 +30,28 @@ app.all('*', function(req, res, next) {
 // Socket.IO for leecher
 
 io.on("connection", function(socket) {
-
-})
+	socket.on("seederDetails", function(username) {
+		console.log(username + " is connected as a seeder yay");
+		seeders.push({
+			id: socket.id,
+			username: username
+		});
+	})
+	socket.on("leecherDetails", function(username) {
+		leechers.push({
+			id: socket.id,
+			username: username
+		});
+	})
+	socket.on('disconnect', function() {
+		var i = leechers.indexOf(socket);
+		if(i+1) leechers.splice(i, 1);
+		else{
+			var i = seeders.indexOf(socket);
+			seeders.splice(i, 1);
+		}
+   });
+});
 
 // Login and logout
 
@@ -63,6 +86,32 @@ app.post("/signup", passport.authenticate("local-signup", {
     failureRedirect: "/signup"
 }));
 
+// Login and logout APIs
+
+app.post("/apisignin", function(req, res) {
+	user.authenticate(req.body.username, req.body.password)
+	.then(function(user) {
+		console.log(user);
+		res.send(JSON.stringify(user));
+	})
+	.fail(function(err) {
+		console.log(err);
+		res.send('{"type": "error"}');
+	})
+});
+
+app.post("/apisignup", function(req, res) {
+	user.create(req, req.body.username, req.body.password)
+	.then(function(user) {
+		console.log(user);
+		res.send(JSON.stringify(user));
+	})
+	.fail(function(err) {
+		console.log(err);
+		res.send('{"type": "error"}');
+	})
+});
+
 // Main routes
 
 app.get('/', function(req, res){
@@ -76,7 +125,7 @@ app.get('/', function(req, res){
 });
 
 app.post("/download", ensureAuthenticated, function(req, res) {
-	dispatcher.addTask(req)
+	dispatcher.addTask(req, seeders, io, "REPLACE THIS PLS")
 	.then(function(details) {
 		res.render("download", {
 			user: req.user,

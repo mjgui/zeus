@@ -1,14 +1,136 @@
 <!DOCTYPE html>
 <html>
-  <head>
+<head>
     <meta charset="UTF-8">
-    <title>Hello World!</title>
-  </head>
-  <body>
+    <title>Zeus Seeder</title>
+    <link href='https://fonts.googleapis.com/css?family=Leckerli+One|Lato:400,700' rel='stylesheet' type='text/css'>
     <script src="http://cdn.peerjs.com/0.3/peer.min.js"></script>
-    <h1>Hello World!</h1>
-    We are using node <script>document.write(process.versions.node)</script>,
-    Chromium <script>document.write(process.versions.chrome)</script>,
-    and Electron <script>document.write(process.versions.electron)</script>.
-  </body>
+    <script src="https://cdn.socket.io/socket.io-1.3.7.js"></script>
+    <link href="main.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+    <a class="logo"><nav>
+        Zeus
+    </nav></a>
+    <main>
+        <div id="signin">
+            <h1>Sign In</h1>
+            <input type="text" placeholder="Username" name="username" required autofocus id="signinName"/>
+            <input type="password" placeholder="Password" name="password" required id="signinPass"/>
+            <input type="submit" value="Sign In" class="button" id="submitSignin"><br>
+            <a class="button" id="goSignup">Create an account instead</a>
+        </div>
+        <div id="signup" style="display:none">
+            <h1>Sign Up</h1>
+            <input type="text" placeholder="Username" name="username" required id="signupName"/>
+            <input type="password" placeholder="Password" name="password" required id="signupPass"/>
+            <input type="password" placeholder="Confirm Password" name="password2" required id="signupPass2"/>
+            <input type="submit" value="Sign Up" class="button" id="submitSignup"><br>
+            <a class="button" id="goSignin">I already have an account</a>
+        </div>
+        <div id="loading" style="display:none">
+            <h1>Awaiting Downloads</h1>
+        </div>
+        <div id="downloadprogress" style="display:none">
+            <h1>Downloading <span id="filename"></span></h1>
+            <div id="progressbar" class="progressbar"><div id="progressbarinner" class="progressbarinner"></div></div>
+            <p><span id="percentage">0</span>% done</p>
+            <p><span id="transferredsize">0</span> bytes out of <span id="totalsize">??</span> bytes transferred</p>
+            <p><span id="elapsedtime">0</span>s elapsed</p>
+            <p><span id="remainingtime">0</span>s left</p>
+        </div>
+    </main>
+    <script>
+        var ipc = require('electron').ipcRenderer;
+        var socket = null;
+        document.getElementById("goSignin").onclick = function() {
+            document.getElementById("signup").style.display = "none";
+            document.getElementById("signin").style.display = "block";
+        }
+        document.getElementById("goSignup").onclick = function() {
+            document.getElementById("signin").style.display = "none";
+            document.getElementById("signup").style.display = "block";
+        }
+        document.getElementById("submitSignin").onclick = function() {
+            var name = document.getElementById("signinName").value;
+            var pass = document.getElementById("signinPass").value;
+            ipc.send("signin", {
+                username: name,
+                password: pass
+            });
+            ipc.once("signinRes", function(event,response) {
+                if(response.type == "error") {
+                    // Handle error here
+                    alert("Wrong username or password");
+                }
+                else {
+                    document.getElementById("signin").style.display = "none";
+                    ready(response);
+                }
+            });
+        }
+        document.getElementById("submitSignup").onclick = function() {
+            var name = document.getElementById("signupName").value;
+            var pass = document.getElementById("signupPass").value;
+            var pass2 = document.getElementById("signupPass2").value;
+            if(name!="" && pass!=""){
+                ipc.send("signup", {
+                    username: name,
+                    password: pass,
+                    password2: pass2
+                });
+                ipc.once("signupRes", function(event,response) {
+                    if(response.type == "error") {
+                        // Handle error here
+                        alert("Something screwed up");
+                    }
+                    else {
+                        document.getElementById("signup").style.display = "none";
+                        ready(response);
+                    }
+                });
+            }
+            else {
+                alert("Invalid username or password");
+            }
+        }
+
+        function ready(user) {
+            document.getElementById("loading").style.display = "block";
+            socket = io.connect('http://localhost:3000');
+            socket.emit('seederDetails', user.username);
+            socket.on('downloadTask', function(data) {
+                console.log(data);
+                dl(data);
+            })
+        }
+
+        function dl(data) {
+            document.getElementById("loading").style.display = "none";
+            document.getElementById("downloadprogress").style.display = "block";
+            document.getElementById("filename").textContent = data.url;
+            ipc.send("download", data);
+            document.getElementById("progressbarinner").style.width = "0%";
+            document.getElementById("percentage").textContent = "0";
+            document.getElementById("elapsedtime").textContent = "0";
+            document.getElementById("remainingtime").textContent = "??";
+            document.getElementById("transferredsize").textContent = "0";
+            document.getElementById("totalsize").textContent = data.totalsize;
+
+            ipc.on("downloadProgress", function(event, state) {
+                document.getElementById("progressbarinner").style.width = Math.floor(state.percentage * 100) + "%";
+                document.getElementById("percentage").textContent = Math.floor(state.percentage * 100);
+                document.getElementById("elapsedtime").textContent = Math.floor(state.time.elapsed);
+                if(state.time.remaining) document.getElementById("remainingtime").textContent = Math.floor(state.time.remaining);
+                document.getElementById("transferredsize").textContent = state.size.transferred;
+            });
+            ipc.once("downloadFinish", function() {
+                document.getElementById("progressbarinner").style.width = "100%";
+                document.getElementById("percentage").textContent = "100";
+                document.getElementById("transferredsize").textContent = document.getElementById("totalsize").textContent;
+                document.getElementById("remainingtime").textContent = "0";
+            });
+        }
+    </script>
+</body>
 </html>

@@ -2,6 +2,7 @@
 <button id="done">Done</button>
 <script>
 	var socket = io();
+	io.emit("leecherDetails", "{{user.username}}")
 	document.getElementByID("done").onclick = function() {
 		// socket.emit();
 	}
