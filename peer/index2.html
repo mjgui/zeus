@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Hello World!</title>
+  </head>
+  <body>
+    <script src="http://cdn.peerjs.com/0.3/peer.js"></script>
+    <h1>This is two 2</h1>
+  </body>
+  <script>
+  var peer = new Peer('two2', {key: '3od2fkpglntmaemi'});
+  peer.on('connection', function(conn) {
+    conn.on('open', function() {
+  // Receive messages
+  conn.on('data', function(data) {
+    console.log('Received', data);
+  });
+
+  // Send messages
+  conn.send('Hello!');
+});
+  });
+  </script>
+</html>

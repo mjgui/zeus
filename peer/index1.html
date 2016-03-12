@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Hello World!</title>
+  </head>
+  <body>
+    <script src="http://cdn.peerjs.com/0.3/peer.js"></script>
+    <h1>This is one 1</h1>
+  </body>
+  <script>
+    var peer = new Peer('one1', {key: 'mtyijs9y1yktke29'});
+    var conn = peer.connect('two2');
+    conn.on('open', function(){
+      conn.send('hi!');
+    });
+  </script>
+</html>
