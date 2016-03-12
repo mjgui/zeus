@@ -29,6 +29,7 @@
     "passport-local": "^1.0.0",
     "q": "^1.4.1",
     "request": "^2.69.0",
+    "request-promise": "^2.0.1",
     "socket.io": "^1.4.5"
   }
 }

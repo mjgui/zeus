@@ -6,6 +6,7 @@ var http = require("http").Server(app);
 var io = require('socket.io')(http);
 var ensureAuthenticated = require("./middlewares/auth.js");
 var connected = [];
+var dispatcher = require("./models/dispatcher.js");
 
 // Public directory
 app.use(express.static(__dirname + '/public'));
@@ -23,7 +24,7 @@ app.all('*', function(req, res, next) {
 	}
 });
 
-// Socket.IO
+// Socket.IO for leecher
 
 io.on("connection", function(socket) {
 
@@ -41,7 +42,7 @@ app.get("/signin", function(req, res) {
         req.session.warning = "You are already signed in";
         res.redirect(req.headers.referer || "/");
     }
-    else res.render("signin", { layout: false });
+    else res.render("signin", {});
 });
 
 app.post("/signin", passport.authenticate("local-signin", {
@@ -54,7 +55,7 @@ app.get("/signup", function(req, res) {
         req.session.warning = "You are already signed in";
         res.redirect(req.headers.referer || "/");
     }
-    else res.render("signup", { layout: false });
+    else res.render("signup", {});
 });
 
 app.post("/signup", passport.authenticate("local-signup", {
@@ -75,8 +76,18 @@ app.get('/', function(req, res){
 });
 
 app.post("/download", ensureAuthenticated, function(req, res) {
-	res.render("downloading", {
-		user: req.user
+	dispatcher.addTask(req)
+	.then(function(details) {
+		res.render("download", {
+			user: req.user,
+			details: details
+		})
+	})
+	.fail(function(err) {
+		res.render("download", {
+			user: req.user,
+			details: {'content-length': err	}
+		})
 	})
 })
 

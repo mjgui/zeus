@@ -2,11 +2,19 @@
 <html>
 <head>
 	<title>Zeus - Bandwidth for Rent</title>
+	<link href='/css/main.css' rel='stylesheet' type='text/css'>
+	<link href='https://fonts.googleapis.com/css?family=Leckerli+One|Lato:400,700' rel='stylesheet' type='text/css'>
+    <script src="https://cdn.socket.io/socket.io-1.3.7.js"></script>
 </head>
 <body>
-	{{{body}}}
-	{{#if error}}{{error}}{{/if}}
+	<a href="/" class="logo"><nav>
+		Zeus
+	</nav></a>
+	<main>
+		{{{body}}}
+	</main>
+	{{!-- {{#if error}}{{error}}{{/if}}
 	{{#if success}}{{success}}{{/if}}
-	{{#if warning}}{{warning}}{{/if}}
+	{{#if warning}}{{warning}}{{/if}} --}}
 </body>
 </html>
