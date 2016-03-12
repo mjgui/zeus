@@ -3,15 +3,15 @@
 const electron = require('electron');
 const app = electron.app;
 
-// const fs = require('fs')
-// var request = require('request')
-// var options = {
-//   url: 'http://releases.ubuntu.com/14.04.4/ubuntu-14.04.4-desktop-amd64.iso',
-//   headers: {
-//     'Range': 'bytes=0-20'
-//   }
-// };
-// request(options).pipe(fs.createWriteStream('bla.iso'));
+const fs = require('fs')
+var request = require('request')
+var options = {
+  url: 'http://releases.ubuntu.com/14.04.4/ubuntu-14.04.4-desktop-amd64.iso',
+  headers: {
+    'Range': 'bytes=0-20'
+  }
+};
+request(options).pipe(fs.createWriteStream('bla.iso'));
 
 
 // Module to create native browser window.
