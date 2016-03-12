@@ -3,26 +3,37 @@ var app = express();
 require("./controllers/config.js")(app, express);
 var passport = require("passport");
 var http = require("http").Server(app);
+var io = require('socket.io')(http);
 var ensureAuthenticated = require("./middlewares/auth.js");
+var connected = [];
 
-app.get('/', function(req, res){
-	res.render("homepage", {
-		user: req.user
-	});
+// Public directory
+app.use(express.static(__dirname + '/public'));
+
+// allow CORS
+
+app.all('*', function(req, res, next) {
+	res.header("Access-Control-Allow-Origin", "*");
+	res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
+	res.header('Access-Control-Allow-Headers', 'Content-type,Accept,X-Access-Token,X-Key');
+	if (req.method == 'OPTIONS') {
+		res.status(200).end();
+	} else {
+		next();
+	}
 });
 
+// Socket.IO
+
+io.on("connection", function(socket) {
+
+})
+
+// Login and logout
+
 app.get("/logout", ensureAuthenticated, function(req, res) {
-    session.remove(req.user.username)
-    .then(function() {
-        console.log("Logged " + req.user.username + " out");
-        req.logout();
-        res.redirect("/");
-    })
-    .fail(function() {
-        console.log("Failed to log " + req.user.username + " out");
-        req.session.error = "An error was encountered while processing your request";
-        res.redirect(req.headers.referer || "/");
-    });
+    req.logout();
+    res.redirect("/");
 });
 
 app.get("/signin", function(req, res) {
@@ -51,6 +62,26 @@ app.post("/signup", passport.authenticate("local-signup", {
     failureRedirect: "/signup"
 }));
 
+// Main routes
+
+app.get('/', function(req, res){
+	if(req.user){
+		res.render("homepage", {
+			user: req.user
+		})
+	}
+	else
+		res.render("landing", {});
+});
+
+app.post("/download", ensureAuthenticated, function(req, res) {
+	res.render("downloading", {
+		user: req.user
+	})
+})
+
+// Listen
+
 http.listen(3000, function(){
-  console.log('listening on *:3000');
+	console.log('listening on *:3000');
 });
