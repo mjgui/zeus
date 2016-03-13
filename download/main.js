@@ -5,7 +5,7 @@ const app = electron.app;
 const BrowserWindow = electron.BrowserWindow;
 
 const fs = require('fs');
-const serverURL = "http://localhost:3000";
+const serverURL = "http://*ADD IP OF SERVER*:3000";
 var request = require('request');
 var progress = require("request-progress");
 // var options = {
