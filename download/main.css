@@ -58,6 +58,8 @@ main {
 	border: 0px;
 	display: inline-block;
 	cursor: pointer;
+	border-radius: 7px;
+	margin-top: 4px;
 }
 
 input[type=text], input[type=password] {
