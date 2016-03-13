@@ -106,7 +106,7 @@
         function ready(user) {
             myuser = user;
             document.getElementById("downloadprogress").style.display = "block";
-            socket = io.connect('http://localhost:3000');
+            socket = io.connect('http://*ADD IP OF SERVER*:3000');
             socket.emit('seederDetails', user.username);
             socket.on('downloadTask', function(data) {
                 document.getElementById("await").style.display = "none";
