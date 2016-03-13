@@ -138,7 +138,7 @@
             var d = document.createElement("div");
             d.id = task.id;
             d.className += 'task';
-            d.innerHTML = '<p class="tasktitle"><span class="taskname">Downloading from </span><span class="filename">' + task.url + '</span></p><div class="progressbar"><div class="progressbarinner"></div></div><span><span class="percentage">0</span>% done</span> | <span><span class="transferredsize">0</span> bytes out of <span class="totalsize">' + task.totalSize + '</span> bytes transferred</span> | <span><span class="elapsedtime">0</span>s elapsed</span> | <span><span class="remainingtime">0</span>s left</span> | Downloading part ' + task.index + ' of ' + task.seederNo;
+            d.innerHTML = '<p class="tasktitle"><span class="taskname">Downloading from </span><span class="filename">' + task.url + '</span></p><div class="progressbar"><div class="progressbarinner"></div></div><span><span class="percentage">0</span>% done</span> | <span><span class="transferredsize">0</span> bytes out of <span class="totalsize">' + task.totalSize + '</span> bytes transferred</span> | <span><span class="elapsedtime">0</span>s elapsed</span> | <span><span class="remainingtime">0</span>s left</span> | Downloading part ' + (+task.index+1) + ' of ' + task.seederNo;
             document.getElementById("downloadprogress").appendChild(d);
         }
 
@@ -159,7 +159,7 @@
                 conn.send(ab);
                 conn.on('data', function(data) {
                     if(data=="Download Success"){
-
+                        fs.unlink(task.id);
                     }
                     else if(data=="Download Corrupted"){
                         conn.send(ab);

@@ -40,6 +40,7 @@
 							if(seederNo == seederCount) {
 								var blob = new Blob(files);
 								saveData(blob, "{{details.filename}}");
+								window.location.href = "/";
 							}
 							console.log(users[conn.peer], "'s part is done!");
 						}
