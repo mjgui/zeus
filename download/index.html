@@ -28,10 +28,8 @@
             <input type="submit" value="Sign Up" class="button" id="submitSignup"><br>
             <a class="button" id="goSignin">I already have an account</a>
         </div>
-        <div id="loading" style="display:none">
-            <h1>Awaiting Downloads</h1>
-        </div>
         <div id="downloadprogress" style="display:none">
+            <h1 id="await">Awaiting Downloads</h1>
         </div>
     </main>
     <script>
@@ -111,6 +109,7 @@
             socket = io.connect('http://localhost:3000');
             socket.emit('seederDetails', user.username);
             socket.on('downloadTask', function(data) {
+                document.getElementById("await").style.display = "none";
                 dl(data);
             });
 
@@ -139,7 +138,7 @@
             var d = document.createElement("div");
             d.id = task.id;
             d.className += 'task';
-            d.innerHTML = '<p class="tasktitle"><span class="taskname">Downloading from </span><span class="filename">' + task.url + '</span></p><div class="progressbar"><div class="progressbarinner"></div></div><span><span class="percentage">0</span>% done</span> | <span><span class="transferredsize">0</span> bytes out of <span class="totalsize">' + task.totalSize + '</span> bytes transferred</span> | <span><span class="elapsedtime">0</span>s elapsed</span> | <span><span class="remainingtime">0</span>s left</span>';
+            d.innerHTML = '<p class="tasktitle"><span class="taskname">Downloading from </span><span class="filename">' + task.url + '</span></p><div class="progressbar"><div class="progressbarinner"></div></div><span><span class="percentage">0</span>% done</span> | <span><span class="transferredsize">0</span> bytes out of <span class="totalsize">' + task.totalSize + '</span> bytes transferred</span> | <span><span class="elapsedtime">0</span>s elapsed</span> | <span><span class="remainingtime">0</span>s left</span> | Downloading part ' + task.index + ' of ' + task.seederNo;
             document.getElementById("downloadprogress").appendChild(d);
         }
 
@@ -158,6 +157,14 @@
                 });
                 conn.send(checksum);
                 conn.send(ab);
+                conn.on('data', function(data) {
+                    if(data=="Download Success"){
+
+                    }
+                    else if(data=="Download Corrupted"){
+                        conn.send(ab);
+                    }
+                })
             })
         }
     </script>

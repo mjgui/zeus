@@ -32,6 +32,7 @@
 					if(checksum[conn.peer]){
 						files[seeders[conn.peer]] = data;
 						var hash = SparkMD5.ArrayBuffer.hash(files[seeders[conn.peer]]); 
+
 						if(hash == checksum[conn.peer]){ // Correct File
 							conn.send("Download Success");
 							seederCount++;
@@ -42,7 +43,9 @@
 							}
 							console.log(users[conn.peer], "'s part is done!");
 						}
-						else {
+
+						else { // Corrupted file
+							files[seeders[conn.peer]] = null;
 							conn.send("Download Corrupted");
 						}
 					}
