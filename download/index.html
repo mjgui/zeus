@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Zeus Seeder</title>
-    <link href='https://fonts.googleapis.com/css?family=Leckerli+One|Lato:400,700' rel='stylesheet' type='text/css'>
+    <link href='https://fonts.googleapis.com/css?family=Norican|Lato:400,700' rel='stylesheet' type='text/css'>
     <script src="http://cdn.peerjs.com/0.3/peer.min.js"></script>
     <script src="https://cdn.socket.io/socket.io-1.3.7.js"></script>
     <link href="main.css" rel="stylesheet" type="text/css">
@@ -32,17 +32,17 @@
             <h1>Awaiting Downloads</h1>
         </div>
         <div id="downloadprogress" style="display:none">
-            <h1>Downloading <span id="filename"></span></h1>
-            <div id="progressbar" class="progressbar"><div id="progressbarinner" class="progressbarinner"></div></div>
-            <p><span id="percentage">0</span>% done</p>
-            <p><span id="transferredsize">0</span> bytes out of <span id="totalsize">??</span> bytes transferred</p>
-            <p><span id="elapsedtime">0</span>s elapsed</p>
-            <p><span id="remainingtime">0</span>s left</p>
         </div>
     </main>
     <script>
         var ipc = require('electron').ipcRenderer;
         var socket = null;
+        var peerid;
+        var ab;
+        var md5 = require('spark-md5');
+        var myuser;
+        const fs = require('fs');
+
         document.getElementById("goSignin").onclick = function() {
             document.getElementById("signup").style.display = "none";
             document.getElementById("signin").style.display = "block";
@@ -69,6 +69,7 @@
                 }
             });
         }
+
         document.getElementById("submitSignup").onclick = function() {
             var name = document.getElementById("signupName").value;
             var pass = document.getElementById("signupPass").value;
@@ -95,41 +96,69 @@
             }
         }
 
+        function toArrayBuffer(buffer) {
+            var ab = new ArrayBuffer(buffer.length);
+            var view = new Uint8Array(ab);
+            for (var i = 0; i < buffer.length; ++i) {
+                view[i] = buffer[i];
+            }
+            return view;
+        }
+
         function ready(user) {
-            document.getElementById("loading").style.display = "block";
+            myuser = user;
+            document.getElementById("downloadprogress").style.display = "block";
             socket = io.connect('http://localhost:3000');
             socket.emit('seederDetails', user.username);
             socket.on('downloadTask', function(data) {
-                console.log(data);
                 dl(data);
-            })
-        }
-
-        function dl(data) {
-            document.getElementById("loading").style.display = "none";
-            document.getElementById("downloadprogress").style.display = "block";
-            document.getElementById("filename").textContent = data.url;
-            ipc.send("download", data);
-            document.getElementById("progressbarinner").style.width = "0%";
-            document.getElementById("percentage").textContent = "0";
-            document.getElementById("elapsedtime").textContent = "0";
-            document.getElementById("remainingtime").textContent = "??";
-            document.getElementById("transferredsize").textContent = "0";
-            document.getElementById("totalsize").textContent = data.totalsize;
+            });
 
             ipc.on("downloadProgress", function(event, state) {
-                document.getElementById("progressbarinner").style.width = Math.floor(state.percentage * 100) + "%";
-                document.getElementById("percentage").textContent = Math.floor(state.percentage * 100);
-                document.getElementById("elapsedtime").textContent = Math.floor(state.time.elapsed);
-                if(state.time.remaining) document.getElementById("remainingtime").textContent = Math.floor(state.time.remaining);
-                document.getElementById("transferredsize").textContent = state.size.transferred;
+                document.querySelector("#" + state.taskid + " .progressbarinner").style.width = state.percentage * 100 + "%";
+                document.querySelector("#" + state.taskid + " .percentage").textContent = Math.floor(state.percentage * 100);
+                document.querySelector("#" + state.taskid + " .elapsedtime").textContent = Math.floor(state.time.elapsed);
+                if(state.time.remaining) document.querySelector("#" + state.taskid + " .remainingtime").textContent = Math.floor(state.time.remaining);
+                document.querySelector("#" + state.taskid + " .transferredsize").textContent = state.size.transferred;
             });
-            ipc.once("downloadFinish", function() {
-                document.getElementById("progressbarinner").style.width = "100%";
-                document.getElementById("percentage").textContent = "100";
-                document.getElementById("transferredsize").textContent = document.getElementById("totalsize").textContent;
-                document.getElementById("remainingtime").textContent = "0";
+
+            ipc.on("downloadFinish", function(event, task) {
+                document.querySelector("#" + task.id + " .progressbarinner").style.width = "100%";
+                document.querySelector("#" + task.id + " .percentage").textContent = "100";
+                document.querySelector("#" + task.id + " .transferredsize").textContent = document.querySelector("#" + task.id + " .totalsize").textContent;
+                document.querySelector("#" + task.id + " .remainingtime").textContent = "0";
+                ul(task);
+                // setTimeout(function() {
+                //     d.remove();
+                // }, 300)
             });
+        }
+
+        function dl(task) {
+            ipc.send("download", task);
+            var d = document.createElement("div");
+            d.id = task.id;
+            d.className += 'task';
+            d.innerHTML = '<p class="tasktitle"><span class="taskname">Downloading from </span><span class="filename">' + task.url + '</span></p><div class="progressbar"><div class="progressbarinner"></div></div><span><span class="percentage">0</span>% done</span> | <span><span class="transferredsize">0</span> bytes out of <span class="totalsize">' + task.totalSize + '</span> bytes transferred</span> | <span><span class="elapsedtime">0</span>s elapsed</span> | <span><span class="remainingtime">0</span>s left</span>';
+            document.getElementById("downloadprogress").appendChild(d);
+        }
+
+        function ul(task) {
+            ab = toArrayBuffer(fs.readFileSync(task.id));
+            var checksum = md5.ArrayBuffer.hash(ab);
+            var peer = new Peer({key: 'sh1nsi55fxgsnhfr'});
+            peer.on("open", function(id) {
+                peerid = id;
+            })
+            var conn = peer.connect(task.id);
+            conn.on('open', function() {
+                conn.send({
+                    id: task.index,
+                    user: myuser.username
+                });
+                conn.send(checksum);
+                conn.send(ab);
+            })
         }
     </script>
 </body>

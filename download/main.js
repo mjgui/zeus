@@ -45,25 +45,26 @@ ipc.on('signup', function(event, data){
     });
 });
 
-ipc.on('download', function(event, data){
+ipc.on('download', function(event, task){
     // begin download here and send updates
     progress(request({
-        url: data.url,
+        url: task.url,
         headers: {
-            "Range": "bytes=" + data.startByte + "-" + data.endByte
+            "Range": "bytes=" + task.startByte + "-" + task.endByte
         }
     }, function() {
-        event.sender.send('downloadFinish', '')
+        event.sender.send('downloadFinish', task)
     }), {
         throttle: 100
     })
     .on('progress', function(state) {
+        state.taskid = task.id;
         event.sender.send('downloadProgress', state);
     })
     .on('failure', function(err) {
         // this better not happen
     })
-    .pipe(fs.createWriteStream(Math.random().toString(36).substring(7)));
+    .pipe(fs.createWriteStream(task.id));
 });
 
 // ipc.on('signin', function(event, data){

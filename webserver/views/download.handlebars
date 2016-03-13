@@ -1,9 +1,73 @@
-<h1>DOWNLOADING {{details.content-length}}</h1>
-<button id="done">Done</button>
+<h1>Downloading file {{details.url}}</h1>
+<div class="progressbar"><div class="progressbarinner"></div></div>
+<script src="http://cdn.peerjs.com/0.3/peer.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/spark-md5/2.0.2/spark-md5.min.js"></script>
 <script>
-	var socket = io();
-	io.emit("leecherDetails", "{{user.username}}")
-	document.getElementByID("done").onclick = function() {
-		// socket.emit();
-	}
+	var peer = new Peer("{{details.id}}", {key: 'sh1nsi55fxgsnhfr'});
+	var seeders = {};
+	var users = {};
+	var checksum = {};
+	var files = [];
+	var seederNo = {{details.seederNo}};
+	var seederCount = 0;
+
+	var saveData = (function () {
+	    var a = document.createElement("a");
+	    document.body.appendChild(a);
+	    a.style = "display: none";
+	    return function (data, fileName) {
+	        var blob = data,
+	            url = window.URL.createObjectURL(blob);
+	        a.href = url;
+	        a.download = fileName;
+	        a.click();
+	        window.URL.revokeObjectURL(url);
+	    };
+	}());
+
+	peer.on('connection', function(conn) {
+		conn.on('open', function() {
+			conn.on('data', function(data) {
+				if(seeders[conn.peer] != null) {
+					if(checksum[conn.peer]){
+						files[seeders[conn.peer]] = data;
+						var hash = SparkMD5.ArrayBuffer.hash(files[seeders[conn.peer]]); 
+						if(hash == checksum[conn.peer]){ // Correct File
+							conn.send("Download Success");
+							seederCount++;
+							document.querySelector('.progressbarinner').style.width = seederCount/seederNo * 100 + "%";
+							if(seederNo == seederCount) {
+								var blob = new Blob(files);
+								saveData(blob, "{{details.filename}}");
+							}
+							console.log(users[conn.peer], "'s part is done!");
+						}
+						else {
+							conn.send("Download Corrupted");
+						}
+					}
+					else {
+						checksum[conn.peer] = data;
+					}
+				}
+				else{
+					seeders[conn.peer] = data.id;
+					users[conn.peer] = data.user;
+				}
+			})
+		})
+	});
+
+	// document.getElementByID("done").onclick = function() {
+	// 	var xhr = new XMLHttpRequest();
+	// 	xhr.onreadystatechange = function() {
+ //    		if (xhr.readyState == 4 && xhr.status == 200) {
+ //    			console.log(xhr.responseText); // Success Message
+ //    			alert("File downloaded successfully");
+ //    			// go back to home page
+	// 		}
+	// 	}
+	// 	xhr.open("POST", "/complete", true);
+	// 	xhr.send("taskid={{details.taskid}}");
+	// }
 </script>

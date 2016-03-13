@@ -31,25 +31,10 @@ app.all('*', function(req, res, next) {
 
 io.on("connection", function(socket) {
 	socket.on("seederDetails", function(username) {
-		console.log(username + " is connected as a seeder yay");
-		seeders.push({
-			id: socket.id,
-			username: username
-		});
-	})
-	socket.on("leecherDetails", function(username) {
-		leechers.push({
-			id: socket.id,
-			username: username
-		});
-	})
+		dispatcher.connectSeeder(socket.id, username);
+	});
 	socket.on('disconnect', function() {
-		var i = leechers.indexOf(socket);
-		if(i+1) leechers.splice(i, 1);
-		else{
-			var i = seeders.indexOf(socket);
-			seeders.splice(i, 1);
-		}
+		dispatcher.disconnectSeeder(socket.id);
    });
 });
 
@@ -125,7 +110,7 @@ app.get('/', function(req, res){
 });
 
 app.post("/download", ensureAuthenticated, function(req, res) {
-	dispatcher.addTask(req, seeders, io, "REPLACE THIS PLS")
+	dispatcher.addTask(req, io)
 	.then(function(details) {
 		res.render("download", {
 			user: req.user,
@@ -137,6 +122,21 @@ app.post("/download", ensureAuthenticated, function(req, res) {
 			user: req.user,
 			details: {'content-length': err	}
 		})
+	})
+})
+
+app.post("/payout", ensureAuthenticated, function(req, res) {
+	user.payout(req.body.taskid)
+	.then(function(task) {
+		res.send("Successfully removed task");
+	})
+})
+
+
+app.post("/complete", ensureAuthenticated, function(req, res) {
+	dispatcher.clearTask(req.body.taskid)
+	.then(function(task) {
+		res.send("Successfully removed task");
 	})
 })
 

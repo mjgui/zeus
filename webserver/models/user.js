@@ -77,11 +77,11 @@ exports.get = function(id) {
     });
 };
 
-exports.update = function(name, problem, score, verdict) {
+exports.payout = function(name, addamount) {
     return Q.promise(function(resolve, reject) {
         Q.ninvoke(users, "findOne", { username: name })
         .then(function(user) {
-            Q.ninvoke(users, "update", { username: user }, { $set: user })
+            Q.ninvoke(users, "update", { username: user }, { $set: {balance : user.balance + addamount} })
             .then(function() {
                 resolve("Updated user");
             })
