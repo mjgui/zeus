@@ -9,3 +9,5 @@ With just a few cents, Zeus can make your life faster, easier and happier.
 
 ##Testing
 The system consists of Webserver, Leecher, and Seeders. The Webserver runs in an Electron window. Leecher is a webpage at the IP of the Webserver, at port 3000. Seeder runs in an Electron window and multiple instances must be run on different computers. In this example, the Webserver and Leecher are on the same computer.
+
+http://imgur.com/a/5C4Nq
